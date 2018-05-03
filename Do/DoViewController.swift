@@ -11,10 +11,16 @@ import UIKit
 class DoViewController: UITableViewController {
   
   var itemArray = ["Learn Swift", "Find a good job", "Pay off debt"]
+  
+  let defaults = UserDefaults.standard  // an interface to the user defaults database where you store key value pairs consistently across launches of the app
 
   override func viewDidLoad() {
     super.viewDidLoad()
-   
+    
+    // To use the data that is stored in NSUserDefaults you:
+    if let items = defaults.array(forKey: "DoListArray") as? [String] {
+      itemArray = items
+    }
   }
   
   //MARK - TableView Datasource Methods
@@ -42,6 +48,8 @@ class DoViewController: UITableViewController {
     }
   }
   
+  
+  
   //MARK - Add New Items
   @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
     
@@ -52,6 +60,10 @@ class DoViewController: UITableViewController {
       // What will happen once the user clickc the Add Item button on our UIAlert?
       
       self.itemArray.append(textField.text!)
+      
+      // To save changes to UserDefaults
+      self.defaults.set(self.itemArray, forKey: "DoListArray")
+      
       self.tableView.reloadData()
     }
     

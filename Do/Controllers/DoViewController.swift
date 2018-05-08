@@ -1,26 +1,21 @@
-//
 //  ViewController.swift
 //  Do
 //
 //  Created by Forrest M Anderson on 5/3/18.
 //  Copyright © 2018 Rouviere Media. All rights reserved.
-//
 
 import UIKit
 
 class DoViewController: UITableViewController {
   
-  var itemArray = ["Learn Swift", "Find a good job", "Pay off debt"]
+  var itemArray = [Item]()
   
-  let defaults = UserDefaults.standard  // an interface to the user defaults database where you store key value pairs consistently across launches of the app
+  // Create a new plist document named Items to hold the data from our app.
+  let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    
-    // To use the data that is stored in NSUserDefaults you:
-    if let items = defaults.array(forKey: "DoListArray") as? [String] {
-      itemArray = items
-    }
+    loadItems()
   }
   
   //MARK - TableView Datasource Methods
@@ -30,41 +25,36 @@ class DoViewController: UITableViewController {
   
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "DoItemCell", for: indexPath)
-    cell.textLabel?.text = itemArray[indexPath.row]
+    
+    let item = itemArray[indexPath.row]
+    cell.textLabel?.text = itemArray[indexPath.row].title
+    cell.accessoryType = item.done ? .checkmark : .none
     
     return cell
   }
   
   //MARK - TableView Delegate Methods
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    print(itemArray[indexPath.row]) // prints the title of each row.
-    if let cell = tableView.cellForRow(at: indexPath) {
-      if cell.accessoryType == .none {
-        cell.accessoryType = .checkmark
-      } else {
-        cell.accessoryType = .none
-      }
-      tableView.deselectRow(at: indexPath, animated: true)  // removes the hightlight from the row that is tapped
-    }
-  }
-  
-  
+   // print(itemArray[indexPath.row]) // prints the title of each row.
+    
+   itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+    saveItems()
+    tableView.deselectRow(at: indexPath, animated: true)  // removes the hightlight from the row that is tapped
+   }
   
   //MARK - Add New Items
   @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
-    
     var textField = UITextField() // empty var to be used below
     
     let alert = UIAlertController(title: "Add New Task", message: "", preferredStyle: .alert)
+    
     let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
       // What will happen once the user clickc the Add Item button on our UIAlert?
       
-      self.itemArray.append(textField.text!)
-      
-      // To save changes to UserDefaults
-      self.defaults.set(self.itemArray, forKey: "DoListArray")
-      
-      self.tableView.reloadData()
+      let newItem = Item()
+      newItem.title = textField.text!
+      self.itemArray.append(newItem)
+      self.saveItems()
     }
     
     alert.addTextField { (alertTextField) in
@@ -73,8 +63,31 @@ class DoViewController: UITableViewController {
     }
     
     alert.addAction(action)
-    
     present(alert, animated: true, completion: nil)
   }
+  
+  //MARK - Model Manipulation Methods
+  func saveItems() {
+    // Save changes using Encoder
+    let encoder = PropertyListEncoder()
+    
+    do {
+      let data = try encoder.encode(itemArray)
+      try data.write(to: dataFilePath!)
+    } catch {
+      print("Error encoding item array, \(error)")
+    }
+    self.tableView.reloadData()
+  }
+  
+  func loadItems() {
+    if let data = try? Data(contentsOf: dataFilePath!) {
+      let decoder = PropertyListDecoder()
+      do {
+        itemArray = try decoder.decode([Item].self, from: data)
+      } catch {
+        print("Error decoding item array, \(error)")
+      }
+    }
+  }
 }
-

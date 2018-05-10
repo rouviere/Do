@@ -45,6 +45,28 @@ class CategoryViewController: UITableViewController {
     return cell
   }
   
+  
+  //MARK - TableView Delegate Methods
+  
+  // 18
+  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    
+    // 19
+    performSegue(withIdentifier: "goToItems", sender: self)
+    
+  }
+  
+  // 20
+  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    let destinationVC = segue.destination as! ToDoListViewController
+    
+    if let indexPath = tableView.indexPathForSelectedRow {
+      destinationVC.selectedCategory = categories[indexPath.row]
+    }
+  }
+  
+  
+  
   //MARK: - Add New Categories
   
   // 8
@@ -105,23 +127,4 @@ class CategoryViewController: UITableViewController {
     }
     tableView.reloadData()
   }
-  
-  //MARK - TableView Delegate Methods
-//  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//    
-//    tableView.deselectRow(at: indexPath, animated: true)  // removes the hightlight from the row that is tapped
-//    
-//    performSegue(withIdentifier: "goToItems", sender: self)
-//    
-//  }
-//  
-//  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-//    let destinationVC = segue.destination as! ToDoListViewController
-//    
-//    if let indexPath = tableView.indexPathForSelectedRow {
-//      destinationVC.selectedCategory = categories[indexPath.row]
-//    }
-//  }
-//  
-  
 }

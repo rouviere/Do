@@ -11,6 +11,13 @@ class ToDoListViewController: UITableViewController {
   
   var itemArray = [Item]()
   
+  // When we call loadItems we are certain we have got a category.
+  //  var selectedCategory: Category? {
+  //    didSet {
+  //      loadItems()
+  //    }
+  //  }
+  
   let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
   override func viewDidLoad() {
@@ -37,9 +44,12 @@ class ToDoListViewController: UITableViewController {
   
   //MARK - TableView Delegate Methods
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-   // print(itemArray[indexPath.row]) // prints the title of each row.
+    // print(itemArray[indexPath.row]) // prints the title of each row to the console.
+    // to remove a row when you select it, use the following:
+    // context.delete(itemArray[indexPath.row]) // removes the item from the database
+    // itemArray.remove(at: indexPath.row)      // removes the item from the array
     
-   itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+    itemArray[indexPath.row].done = !itemArray[indexPath.row].done
     
     saveItems()
     
@@ -84,19 +94,49 @@ class ToDoListViewController: UITableViewController {
     self.tableView.reloadData()
   }
   
-
+ // func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+    
+//    let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+//
+//    if let additionalPredicate = predicate {
+//      request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+//    } else {
+//      request.predicate = categoryPredicate
+//    }
   
-  func loadItems() {
-    let request: NSFetchRequest<Item> = Item.fetchRequest()
+  func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
   
     do {
       itemArray = try context.fetch(request)
     } catch {
       print("Error fetching data from context \(error)")
     }
-    self.tableView.reloadData()
+    tableView.reloadData()
   }
 } // End Class
 
 
+extension ToDoListViewController: UISearchBarDelegate {
+
+  func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+
+    let request: NSFetchRequest<Item> = Item.fetchRequest()
+
+    request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+    
+    request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+    
+    loadItems(with: request)
+  }
+
+  func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+    if searchBar.text?.count == 0 {
+      loadItems()
+
+      DispatchQueue.main.async {
+        searchBar.resignFirstResponder()
+      }
+    }
+  }
+}
 
